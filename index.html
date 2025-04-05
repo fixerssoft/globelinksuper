@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Rankings</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #000;
+    }
+
+    #video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+      object-fit: cover;
+    }
+
+    .container {
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      text-align: center;
+      width: 95%;
+      max-width: 1800px;
+      height: 90%;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #fff;
+      font-size: 32px;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    }
+
+    .motivation-line {
+      font-size: 24px;
+      color: #fff;
+      margin-bottom: 25px;
+      font-weight: bold;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      flex-grow: 1;
+      background-color: rgba(0, 0, 0, 0.3);
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 18px;
+      text-align: center;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    th {
+      background-color: rgba(0, 0, 0, 0.5);
+      font-weight: bold;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    td {
+      background-color: rgba(0, 0, 0, 0.2);
+      font-size: 16px;
+    }
+
+    td img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      object-fit: cover;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    tr:hover td {
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .timer {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      color: #fff;
+      font-size: 24px;
+      font-weight: bold;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .time-date {
+      color: #fff;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .reward-message {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, #f39c12, #e74c3c);
+      color: #fff;
+      padding: 20px 40px;
+      border-radius: 50px;
+      font-size: 24px;
+      font-weight: bold;
+      display: none;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.05); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+
+    .rank-badge {
+      font-size: 24px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .gold-badge {
+      color: gold;
+      text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+    }
+
+    .silver-badge {
+      color: silver;
+      text-shadow: 0 0 5px rgba(192, 192, 192, 0.7);
+    }
+
+    .bronze-badge {
+      color: #cd7f32;
+      text-shadow: 0 0 5px rgba(205, 127, 50, 0.7);
+    }
+
+    .normal-badge {
+      color: #fff;
+    }
+
+    .team-title {
+      color: #fff;
+      text-align: center;
+      margin: 15px 0;
+      font-size: 28px;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .view {
+      display: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    .view.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Teams Grid View */
+    .teams-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+      height: 80%;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .team-card {
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 15px;
+      height: fit-content;
+    }
+
+    .team-card h2 {
+      margin-top: 0;
+      color: #fff;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .team-card table {
+      width: 100%;
+      margin: 0;
+    }
+
+    .team-card th, .team-card td {
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .team-card td img {
+      width: 40px;
+      height: 40px;
+    }
+
+    /* VS Match View */
+    .vs-match-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      gap: 50px;
+    }
+
+    .vs-player {
+      text-align: center;
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .vs-player-image {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: 5px solid #fff;
+      object-fit: cover;
+      margin: 0 auto 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .vs-player-name {
+      font-size: 32px;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+      margin-bottom: 10px;
+    }
+
+    .vs-player-team {
+      font-size: 20px;
+      color: #ddd;
+      margin-bottom: 20px;
+    }
+
+    .vs-player-score {
+      font-size: 28px;
+      color: gold;
+      font-weight: bold;
+    }
+
+    .vs-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vs-text {
+      font-size: 80px;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+      margin: 0 30px;
+    }
+
+    .vs-title {
+      font-size: 40px;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Enhanced Champions View */
+    .champions-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+      perspective: 1000px;
+    }
+
+    .champions-image-container {
+      position: relative;
+      width: 80%;
+      max-width: 900px;
+      height: 60vh;
+      transform-style: preserve-3d;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateX(0) rotateY(-5deg);
+      }
+      25% {
+        transform: translateX(-20px) rotateY(5deg);
+      }
+      50% {
+        transform: translateX(0) rotateY(-5deg);
+      }
+      75% {
+        transform: translateX(20px) rotateY(5deg);
+      }
+    }
+
+    .champions-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 15px;
+      box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.6),
+        0 0 60px rgba(255, 165, 0, 0.4),
+        0 0 90px rgba(255, 69, 0, 0.2);
+      transform: rotateY(-5deg);
+      transition: transform 0.5s ease;
+      border: 5px solid gold;
+    }
+
+    .champions-image:hover {
+      transform: rotateY(5deg) scale(1.02);
+    }
+
+    .champions-message {
+      font-size: 36px;
+      color: gold;
+      margin-top: 30px;
+      font-weight: bold;
+      text-shadow: 
+        0 0 10px rgba(255, 215, 0, 0.8),
+        0 0 20px rgba(255, 165, 0, 0.6);
+      max-width: 80%;
+      text-align: center;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.7);
+      border-radius: 10px;
+      border: 2px solid gold;
+      animation: pulseText 2s infinite alternate;
+    }
+
+    @keyframes pulseText {
+      from {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      }
+      to {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+      }
+    }
+
+    .champions-glow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(255,215,0,0.3) 0%, transparent 70%);
+      border-radius: 15px;
+      animation: glowPulse 3s infinite alternate;
+    }
+
+    @keyframes glowPulse {
+      from {
+        opacity: 0.5;
+      }
+      to {
+        opacity: 0.8;
+      }
+    }
+
+    .champions-stars {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      background-color: gold;
+      border-radius: 50%;
+      animation: twinkle 2s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from {
+        opacity: 0.2;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+  </style>
+</head>
+<body>
+  <video id="video-background" autoplay muted loop>
+    <source src="background.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <div class="top-bar">
+    <div class="time-date" id="time-date">Loading...</div>
+  </div>
+
+  <div class="container">
+    <div class="motivation-line">Work hard, stay focused, and get rewarded!</div>
+
+    <!-- All Teams View -->
+    <div class="view active" id="all-teams-view">
+      <h1>All Teams Ranking</h1>
+      <table id="all-teams-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Profile</th>
+            <th>Name</th>
+            <th>Team</th>
+            <th>Designation</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Teams Grid View -->
+    <div class="view" id="teams-grid-view">
+      <h1>Teams Performance</h1>
+      <div class="teams-grid" id="teams-grid"></div>
+    </div>
+
+    <!-- VS Match View -->
+    <div class="view" id="vs-match-view">
+      <h1 class="vs-title">Head-to-Head Challenge</h1>
+      <div class="vs-match-container">
+        <div class="vs-player">
+          <img id="player1-image" class="vs-player-image" src="https://via.placeholder.com/200" alt="Player 1">
+          <div class="vs-player-name" id="player1-name">Player 1</div>
+          <div class="vs-player-team" id="player1-team">Team Name</div>
+          <div class="vs-player-score">Score: <span id="player1-score">0</span></div>
+        </div>
+        
+        <div class="vs-center">
+          <div class="vs-text">VS</div>
+        </div>
+        
+        <div class="vs-player">
+          <img id="player2-image" class="vs-player-image" src="https://via.placeholder.com/200" alt="Player 2">
+          <div class="vs-player-name" id="player2-name">Player 2</div>
+          <div class="vs-player-team" id="player2-team">Team Name</div>
+          <div class="vs-player-score">Score: <span id="player2-score">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Champions View -->
+    <div class="view" id="champions-view">
+      <div class="champions-container">
+        <div class="champions-image-container">
+          <div class="champions-glow"></div>
+          <div class="champions-stars" id="champions-stars"></div>
+          <img id="champions-display-image" class="champions-image" src="https://performance.globelinksuper.com/images/champions.jpg" alt="Champions">
+        </div>
+        <div id="champions-display-message" class="champions-message"></div>
+      </div>
+    </div>
+
+    <div class="timer" id="timer">15s</div>
+    <div class="reward-message" id="reward-message">Congratulations! You've earned a reward!</div>
+  </div>
+
+  <script>
+    // Default teams data with absolute image paths
+    const defaultTeamsData = {
+      "Danish Team": [
+        { name: "Danish", designation: "HOD", deposit: 54000, dp: "https://performance.globelinksuper.com/images/danish.jpg", badge: "" },
+        { name: "Sunny", designation: "Relationship Manager", deposit: 55000, dp: "https://performance.globelinksuper.com/images/sunny.jpg", badge: "" },
+        { name: "Zumry", designation: "Pending", deposit: 48000, dp: "https://performance.globelinksuper.com/images/zumry.jpg", badge: "" }
+      ],
+      "Jishnui Team": [
+        { name: "Jishnui", designation: "Manager", deposit: 52000, dp: "https://performance.globelinksuper.com/images/jishnui.jpg", badge: "" },
+        { name: "Amith", designation: "Relationship Manager", deposit: 52000, dp: "https://performance.globelinksuper.com/images/amith.jpg", badge: "" },
+        { name: "Mudassar", designation: "Relationship Manager", deposit: 47000, dp: "https://performance.globelinksuper.com/images/mudassar.jpg", badge: "" }
+      ],
+      "Mohtady Team": [
+        { name: "Mohtady", designation: "Pending", deposit: 50000, dp: "https://performance.globelinksuper.com/images/mohtady.jpg", badge: "" },
+        { name: "Noor", designation: "Pending", deposit: 52000, dp: "https://performance.globelinksuper.com/images/noor.jpg", badge: "" },
+        { name: "Mossad", designation: "Pending", deposit: 60000, dp: "https://performance.globelinksuper.com/images/mossad.jpg", badge: "" }
+      ],
+      "John Team": [
+        { name: "John", designation: "Manager", deposit: 51000, dp: "https://performance.globelinksuper.com/images/john.jpg", badge: "" },
+        { name: "Mike", designation: "Relationship Manager", deposit: 49000, dp: "https://performance.globelinksuper.com/images/mike.jpg", badge: "" },
+        { name: "Sarah", designation: "Pending", deposit: 45000, dp: "https://performance.globelinksuper.com/images/sarah.jpg", badge: "" }
+      ],
+      "Boss Team": [
+        { name: "Boss", designation: "CEO", deposit: 80000, dp: "https://performance.globelinksuper.com/images/boss.jpg", badge: "" },
+        { name: "Alex", designation: "Manager", deposit: 60000, dp: "https://performance.globelinksuper.com/images/alex.jpg", badge: "" },
+        { name: "Emma", designation: "Relationship Manager", deposit: 55000, dp: "https://performance.globelinksuper.com/images/emma.jpg", badge: "" }
+      ]
+    };
+
+    // Default VS Matches with absolute image paths
+    const defaultVsMatches = [
+      {
+        player1: {
+          name: "Danish",
+          team: "Danish Team",
+          designation: "HOD",
+          deposit: 54000,
+          dp: "https://performance.globelinksuper.com/images/danish.jpg",
+          badge: ""
+        },
+        player2: {
+          name: "Jishnui",
+          team: "Jishnui Team",
+          designation: "Manager",
+          deposit: 52000,
+          dp: "https://performance.globelinksuper.com/images/jishnui.jpg",
+          badge: ""
+        }
+      },
+      {
+        player1: {
+          name: "Sunny",
+          team: "Danish Team",
+          designation: "Relationship Manager",
+          deposit: 55000,
+          dp: "https://performance.globelinksuper.com/images/sunny.jpg",
+          badge: ""
+        },
+        player2: {
+          name: "Amith",
+          team: "Jishnui Team",
+          designation: "Relationship Manager",
+          deposit: 52000,
+          dp: "https://performance.globelinksuper.com/images/amith.jpg",
+          badge: ""
+        }
+      }
+    ];
+
+    // Default Champions Data with absolute image path
+    const defaultChampionsData = {
+      image: "https://performance.globelinksuper.com/images/champions.jpg",
+      message: "Congratulations to our top performers this month!"
+    };
+
+    // Load data
+    let teamsData = JSON.parse(JSON.stringify(defaultTeamsData));
+    let vsMatches = JSON.parse(JSON.stringify(defaultVsMatches));
+    let championsData = JSON.parse(JSON.stringify(defaultChampionsData));
+    
+    // Try to load from localStorage
+    try {
+      if (localStorage.getItem("teamsData")) {
+        teamsData = JSON.parse(localStorage.getItem("teamsData"));
+      }
+      if (localStorage.getItem("vsMatches")) {
+        vsMatches = JSON.parse(localStorage.getItem("vsMatches"));
+      }
+      if (localStorage.getItem("championsData")) {
+        championsData = JSON.parse(localStorage.getItem("championsData"));
+      }
+    } catch (e) {
+      console.error("Error loading data from localStorage:", e);
+    }
+
+    let currentView = "all-teams";
+    let timeLeft = 15;
+    let currentVsMatchIndex = 0;
+    let teamNames = Object.keys(teamsData);
+
+    function renderAllTeamsTable() {
+      const tbody = document.querySelector("#all-teams-table tbody");
+      tbody.innerHTML = "";
+
+      // Combine all team members
+      const allMembers = [];
+      Object.entries(teamsData).forEach(([teamName, team]) => {
+        if (team && team.length) {
+          team.forEach(member => {
+            allMembers.push({
+              ...member,
+              team: teamName
+            });
+          });
+        }
+      });
+
+      // Sort by score (descending)
+      allMembers.sort((a, b) => b.deposit - a.deposit);
+
+      // Add rows to table
+      allMembers.forEach((member, index) => {
+        const row = document.createElement("tr");
+        
+        // Determine badge class based on rank
+        let badgeClass = "normal-badge";
+        if (index === 0) badgeClass = "gold-badge";
+        else if (index === 1) badgeClass = "silver-badge";
+        else if (index === 2) badgeClass = "bronze-badge";
+        
+        row.innerHTML = `
+          <td>${index + 1} <span class="rank-badge ${badgeClass}">${member.badge || getRankBadge(index + 1)}</span></td>
+          <td><img src="${member.dp}" alt="${member.name}" onerror="this.src='https://via.placeholder.com/60'"></td>
+          <td>${member.name}</td>
+          <td>${member.team}</td>
+          <td>${member.designation}</td>
+          <td>$${member.deposit.toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderTeamsGrid() {
+      const grid = document.getElementById("teams-grid");
+      grid.innerHTML = "";
+
+      teamNames.forEach(teamName => {
+        const teamCard = document.createElement("div");
+        teamCard.className = "team-card";
+        
+        const teamTitle = document.createElement("h2");
+        teamTitle.textContent = teamName;
+        
+        const teamTable = document.createElement("table");
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
+        
+        thead.innerHTML = `
+          <tr>
+            <th>Profile</th>
+            <th>Name</th>
+            <th>Score</th>
+          </tr>
+        `;
+        
+        if (teamsData[teamName] && teamsData[teamName].length) {
+          // Sort team members by score (descending)
+          const sortedMembers = [...teamsData[teamName]].sort((a, b) => b.deposit - a.deposit);
+          
+          sortedMembers.forEach((member, index) => {
+            const row = document.createElement("tr");
+            
+            // Determine badge class based on rank within team
+            let badgeClass = "normal-badge";
+            if (index === 0) badgeClass = "gold-badge";
+            else if (index === 1) badgeClass = "silver-badge";
+            else if (index === 2) badgeClass = "bronze-badge";
+            
+            row.innerHTML = `
+              <td><img src="${member.dp}" alt="${member.name}" onerror="this.src='https://via.placeholder.com/40'"></td>
+              <td>${member.name} <span class="rank-badge ${badgeClass}">${member.badge || ''}</span></td>
+              <td>$${member.deposit.toLocaleString()}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        }
+        
+        teamTable.appendChild(thead);
+        teamTable.appendChild(tbody);
+        teamCard.appendChild(teamTitle);
+        teamCard.appendChild(teamTable);
+        grid.appendChild(teamCard);
+      });
+    }
+
+    function renderVsMatch() {
+      const vsView = document.getElementById("vs-match-view");
+      if (vsMatches.length === 0) {
+        vsView.innerHTML = "<h1>No VS Matches Available</h1>";
+        return;
+      }
+      
+      const match = vsMatches[currentVsMatchIndex % vsMatches.length];
+      
+      // Player 1
+      document.getElementById("player1-name").textContent = match.player1.name;
+      document.getElementById("player1-team").textContent = match.player1.team;
+      document.getElementById("player1-score").textContent = match.player1.deposit.toLocaleString();
+      document.getElementById("player1-image").src = match.player1.dp;
+      document.getElementById("player1-image").onerror = function() { this.src = 'https://via.placeholder.com/200'; };
+      
+      // Player 2
+      document.getElementById("player2-name").textContent = match.player2.name;
+      document.getElementById("player2-team").textContent = match.player2.team;
+      document.getElementById("player2-score").textContent = match.player2.deposit.toLocaleString();
+      document.getElementById("player2-image").src = match.player2.dp;
+      document.getElementById("player2-image").onerror = function() { this.src = 'https://via.placeholder.com/200'; };
+    }
+
+    function renderChampionsView() {
+      document.getElementById("champions-display-image").src = championsData.image;
+      document.getElementById("champions-display-image").onerror = function() { this.src = 'https://via.placeholder.com/1200x600'; };
+      document.getElementById("champions-display-message").textContent = 
+        championsData.message || "Congratulations to our champions!";
+    }
+
+    function createStars() {
+      const starsContainer = document.getElementById('champions-stars');
+      starsContainer.innerHTML = '';
+      
+      // Create 50 stars
+      for (let i = 0; i < 50; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        
+        // Random position
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        
+        // Random size between 2px and 5px
+        const size = Math.random() * 3 + 2;
+        
+        // Random animation delay
+        const delay = Math.random() * 2;
+        
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.animationDelay = `${delay}s`;
+        
+        starsContainer.appendChild(star);
+      }
+    }
+
+    function getRankBadge(rank) {
+      if (rank === 1) return "🥇";
+      if (rank === 2) return "🥈";
+      if (rank === 3) return "🥉";
+      return "";
+    }
+
+    function switchViews() {
+      // Hide all views
+      document.querySelectorAll(".view").forEach(view => {
+        view.classList.remove("active");
+      });
+      
+      if (currentView === "all-teams") {
+        // Switch to teams grid view
+        document.getElementById("teams-grid-view").classList.add("active");
+        currentView = "teams-grid";
+        renderTeamsGrid();
+      } 
+      else if (currentView === "teams-grid") {
+        // Skip individual team views and go directly to VS matches
+        if (vsMatches.length > 0) {
+          document.getElementById("vs-match-view").classList.add("active");
+          currentView = "vs-match";
+          currentVsMatchIndex = 0;
+          renderVsMatch();
+        } else {
+          // No VS matches, switch to champions
+          currentView = "champions";
+          switchViews();
+        }
+      }
+      else if (currentView === "vs-match") {
+        // Check if we have more VS matches to show
+        if (currentVsMatchIndex < vsMatches.length - 1) {
+          // Show next VS match
+          currentVsMatchIndex++;
+          renderVsMatch();
+          document.getElementById("vs-match-view").classList.add("active");
+        } else {
+          // No more VS matches, switch to champions
+          currentView = "champions";
+          switchViews();
+        }
+      }
+      else if (currentView === "champions") {
+        // Show champions view
+        document.getElementById("champions-view").classList.add("active");
+        renderChampionsView();
+        
+        // Prepare to go back to all teams
+        currentView = "all-teams";
+      }
+      
+      // Reset timer
+      timeLeft = 15;
+    }
+
+    function updateTimer() {
+      document.getElementById("timer").textContent = `${timeLeft}s`;
+      timeLeft--;
+      
+      if (timeLeft < 0) {
+        switchViews();
+      }
+    }
+
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById("time-date").textContent = now.toLocaleString();
+    }
+
+    function showRewardMessage() {
+      const rewardMessage = document.getElementById("reward-message");
+      rewardMessage.style.display = "block";
+      setTimeout(() => {
+        rewardMessage.style.display = "none";
+      }, 5000);
+    }
+
+    function checkForReward() {
+      const now = new Date();
+      if (now.getDay() === 5 && now.getHours() === 17) {
+        showRewardMessage();
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      // Make sure we have valid team data
+      if (!teamsData || typeof teamsData !== 'object') {
+        teamsData = JSON.parse(JSON.stringify(defaultTeamsData));
+      }
+      
+      // Ensure teamNames is correct
+      teamNames = Object.keys(teamsData).filter(team => 
+        Array.isArray(teamsData[team]) && teamsData[team].length > 0
+      );
+
+      // Initial render
+      renderAllTeamsTable();
+      updateDateTime();
+      createStars();
+      
+      // Set up intervals
+      setInterval(updateTimer, 1000);
+      setInterval(updateDateTime, 60000);
+      setInterval(checkForReward, 60000);
+    });
+  </script>
+</body>
+</html>
